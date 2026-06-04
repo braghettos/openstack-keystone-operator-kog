@@ -1,0 +1,17 @@
+{{- if .Values.authBridge.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "openstack-keystone-operator-kog.authBridgeName" . }}
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.authBridge.service.type }}
+  selector:
+    {{- include "openstack-keystone-operator-kog.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: auth-bridge
+  ports:
+    - name: api
+      port: {{ .Values.authBridge.service.port }}
+      targetPort: 8080
+{{- end }}

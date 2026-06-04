@@ -1,0 +1,89 @@
+openapi: 3.0.3
+info:
+  title: OpenStack Identity (Keystone) v3 - Role Assignments (KOG-friendly subset)
+  description: |
+    Grant/revoke a role to a user on a project. A role assignment is not a CRUD
+    object - it is an idempotent grant: PUT assigns, DELETE revokes (both 204).
+    Modeled as a CR whose create fires the PUT; since PUT is idempotent, a
+    re-fire is a harmless no-op. The CRD Kind is `IdentityRoleAssignment`.
+    Paths are relative to the identity endpoint base (.../v3).
+  version: "3.0"
+servers:
+  - url: {{ include "openstack-keystone-operator-kog.authBridgeUrl" . }}
+    description: In-cluster Keystone-auth proxy
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+  schemas:
+    RoleAssignmentSpec:
+      type: object
+      required:
+        - project_id
+        - user_id
+        - role_id
+      properties:
+        project_id:
+          type: string
+        user_id:
+          type: string
+        role_id:
+          type: string
+    RoleAssignmentList:
+      type: object
+      properties:
+        role_assignments:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+security:
+  - bearer: []
+paths:
+  /role_assignments:
+    get:
+      operationId: listRoleAssignments
+      summary: List role assignments
+      tags: [role-assignments]
+      security:
+        - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleAssignmentList'
+  /projects/{project_id}/users/{user_id}/roles/{role_id}:
+    parameters:
+      - { name: project_id, in: path, required: true, schema: { type: string } }
+      - { name: user_id, in: path, required: true, schema: { type: string } }
+      - { name: role_id, in: path, required: true, schema: { type: string } }
+    put:
+      operationId: grantRole
+      summary: Assign a role to a user on a project
+      tags: [role-assignments]
+      security:
+        - bearer: []
+      # Keystone's grant PUT takes no body; this requestBody exists only so
+      # oasgen derives project_id/user_id/role_id as CR spec fields (they are
+      # the composite path params). Keystone ignores the body.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleAssignmentSpec'
+      responses:
+        '204':
+          description: Assigned
+    delete:
+      operationId: revokeRole
+      summary: Revoke a role from a user on a project
+      tags: [role-assignments]
+      security:
+        - bearer: []
+      responses:
+        '204':
+          description: Revoked

@@ -1,0 +1,42 @@
+{{- if .Values.restdefinitions.role.enabled }}
+apiVersion: ogen.krateo.io/v1alpha1
+kind: RestDefinition
+metadata:
+  name: {{ .Release.Name }}-role
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+spec:
+  oasPath: configmap://{{ .Release.Namespace }}/{{ .Release.Name }}-role/role.yaml
+  resourceGroup: {{ .Values.restdefinitions.role.resourceGroup }}
+  resource:
+    # Keystone wraps the payload in a `role` envelope -> identifiers/status under .role.*
+    kind: {{ .Values.restdefinitions.role.resourceKind }}
+    identifiers:
+      - role.id
+      - role.name
+    additionalStatusFields:
+      - role.id
+      - role.domain_id
+    verbsDescription:
+      - action: create
+        method: POST
+        path: /roles
+      - action: get
+        method: GET
+        path: /roles/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: status.role.id
+      - action: update
+        method: PATCH
+        path: /roles/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: status.role.id
+      - action: delete
+        method: DELETE
+        path: /roles/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: status.role.id
+{{- end }}

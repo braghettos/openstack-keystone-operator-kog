@@ -1,0 +1,11 @@
+{{- if .Values.restdefinitions.group.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-group
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+data:
+  group.yaml: |
+{{ tpl (.Files.Get "assets/group.yaml") . | indent 4 }}
+{{- end }}

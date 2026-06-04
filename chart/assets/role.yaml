@@ -1,0 +1,124 @@
+openapi: 3.0.3
+info:
+  title: OpenStack Identity (Keystone) v3 - Roles (KOG-friendly subset)
+  description: |
+    Hand-crafted OpenAPI 3.0 subset of the Keystone v3 Identity API covering the
+    Roles lifecycle (create / get / update / delete). Keystone wraps the payload
+    in a `role` envelope, so the CR uses `spec.role.*`; the CRD Kind is
+    `IdentityRole` to avoid colliding with that envelope property in crdgen. Paths are
+    relative to the identity endpoint base (.../v3), which the auth-bridge forwards to.
+  version: "3.0"
+servers:
+  - url: {{ include "openstack-keystone-operator-kog.authBridgeUrl" . }}
+    description: In-cluster Keystone-auth proxy
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+  schemas:
+    RoleSpec:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Role name.
+        domain_id:
+          type: string
+          description: Domain-scoped role (optional).
+        description:
+          type: string
+    RoleCreateRequest:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          $ref: '#/components/schemas/RoleSpec'
+    RoleSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        domain_id:
+          type: string
+    RoleEnvelope:
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/RoleSummary'
+security:
+  - bearer: []
+paths:
+  /roles:
+    post:
+      operationId: createRole
+      summary: Create a role
+      tags: [roles]
+      security:
+        - bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleEnvelope'
+  /roles/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getRole
+      summary: Show role details
+      tags: [roles]
+      security:
+        - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleEnvelope'
+    patch:
+      operationId: updateRole
+      summary: Update a role
+      tags: [roles]
+      security:
+        - bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleCreateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleEnvelope'
+    delete:
+      operationId: deleteRole
+      summary: Delete a role
+      tags: [roles]
+      security:
+        - bearer: []
+      responses:
+        '204':
+          description: Deleted

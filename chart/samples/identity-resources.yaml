@@ -1,0 +1,81 @@
+# Sample Keystone identity CRs.
+#
+# oasgen-provider generates a per-Kind <Kind>Configuration carrying the bearer
+# token (from the OAS http/bearer security scheme). Because the auth-bridge proxy
+# injects a fresh X-Auth-Token itself, the bearer token here is a placeholder -
+# any non-empty Secret value works. Create one Configuration per Kind you use.
+#
+# kubectl create secret generic keystone-token --from-literal=token=proxy-injects-real-token -n krateo-system
+---
+apiVersion: identity.openstack.krateo.io/v1alpha1
+kind: IdentityProjectConfiguration
+metadata:
+  name: keystone-config
+  namespace: krateo-system
+spec:
+  authentication:
+    bearer:
+      tokenRef: { name: keystone-token, namespace: krateo-system, key: token }
+---
+apiVersion: identity.openstack.krateo.io/v1alpha1
+kind: IdentityProject
+metadata:
+  name: demo-project
+  namespace: krateo-system
+spec:
+  configurationRef: { name: keystone-config, namespace: krateo-system }
+  project:
+    name: demo-project
+    domain_id: default
+    description: Created by keystone-kog
+    enabled: true
+---
+apiVersion: identity.openstack.krateo.io/v1alpha1
+kind: IdentityUser
+metadata:
+  name: demo-user
+  namespace: krateo-system
+spec:
+  # configurationRef -> an IdentityUserConfiguration (same token Secret).
+  configurationRef: { name: keystone-config-user, namespace: krateo-system }
+  user:
+    name: demo-user
+    domain_id: default
+    password: "change-me"
+    email: demo@example.com
+    enabled: true
+---
+apiVersion: identity.openstack.krateo.io/v1alpha1
+kind: IdentityRole
+metadata:
+  name: demo-role
+  namespace: krateo-system
+spec:
+  configurationRef: { name: keystone-config-role, namespace: krateo-system }
+  role:
+    name: demo-role
+---
+# Grant demo-role to demo-user on demo-project (fill in the IDs from the CR statuses).
+apiVersion: identity.openstack.krateo.io/v1alpha1
+kind: IdentityRoleAssignment
+metadata:
+  name: demo-grant
+  namespace: krateo-system
+spec:
+  configurationRef: { name: keystone-config-role-assignment, namespace: krateo-system }
+  project_id: "<demo-project id>"
+  user_id: "<demo-user id>"
+  role_id: "<demo-role id>"
+---
+# A long-lived application credential for demo-user (replaces expiring tokens).
+apiVersion: identity.openstack.krateo.io/v1alpha1
+kind: IdentityApplicationCredential
+metadata:
+  name: demo-appcred
+  namespace: krateo-system
+spec:
+  configurationRef: { name: keystone-config-application-credential, namespace: krateo-system }
+  user_id: "<demo-user id>"
+  application_credential:
+    name: demo-appcred
+    description: Created by keystone-kog

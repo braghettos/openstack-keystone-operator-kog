@@ -1,0 +1,11 @@
+{{- if .Values.restdefinitions.project.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-project
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+data:
+  project.yaml: |
+{{ tpl (.Files.Get "assets/project.yaml") . | indent 4 }}
+{{- end }}

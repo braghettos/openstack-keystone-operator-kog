@@ -1,0 +1,11 @@
+{{- if .Values.restdefinitions.user.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-user
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+data:
+  user.yaml: |
+{{ tpl (.Files.Get "assets/user.yaml") . | indent 4 }}
+{{- end }}
