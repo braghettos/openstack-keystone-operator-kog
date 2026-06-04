@@ -1,0 +1,69 @@
+{{- if .Values.authBridge.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "openstack-keystone-operator-kog.authBridgeName" . }}
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.authBridge.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "openstack-keystone-operator-kog.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: auth-bridge
+  template:
+    metadata:
+      {{- with .Values.authBridge.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "openstack-keystone-operator-kog.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: auth-bridge
+    spec:
+      containers:
+        - name: proxy
+          image: "{{ .Values.authBridge.image.repository }}:{{ .Values.authBridge.image.tag }}"
+          imagePullPolicy: {{ .Values.authBridge.image.pullPolicy }}
+          command: ["python3", "/app/openstack-auth-proxy.py"]
+          env:
+            - { name: OS_CLOUD, value: {{ .Values.authBridge.osCloud | quote }} }
+            - { name: OS_CLIENT_CONFIG_FILE, value: /etc/openstack/clouds.yaml }
+            - { name: SERVICE_TYPE, value: {{ .Values.authBridge.serviceType | quote }} }
+            - { name: OS_INTERFACE, value: {{ .Values.authBridge.osInterface | quote }} }
+            - { name: UPSTREAM_ENDPOINT, value: {{ .Values.authBridge.upstreamEndpoint | quote }} }
+            - { name: LISTEN_PORT, value: "8080" }
+          ports:
+            - name: api
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 8
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.authBridge.resources | nindent 12 }}
+          volumeMounts:
+            - { name: script, mountPath: /app }
+            - { name: clouds, mountPath: /etc/openstack, readOnly: true }
+      volumes:
+        - name: script
+          configMap:
+            name: {{ include "openstack-keystone-operator-kog.authBridgeName" . }}
+        - name: clouds
+          secret:
+            secretName: {{ .Values.authBridge.cloudsSecret }}
+      {{- with .Values.authBridge.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.authBridge.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.authBridge.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

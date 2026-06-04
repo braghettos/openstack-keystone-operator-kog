@@ -1,0 +1,11 @@
+{{- if .Values.authBridge.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "openstack-keystone-operator-kog.authBridgeName" . }}
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+data:
+  openstack-auth-proxy.py: |
+{{ .Files.Get "scripts/openstack-auth-proxy.py" | indent 4 }}
+{{- end }}

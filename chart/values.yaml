@@ -1,0 +1,93 @@
+# Default values for openstack-keystone-operator-kog.
+
+# Toggle the per-resource RestDefinitions emitted by this chart. Each Nova/
+# Keystone payload is envelope-wrapped (project/user/role/group/domain/
+# application_credential), so each Kind is prefixed `Identity*` to avoid the
+# crdgen Kind-vs-property collision (the same reason Nova's Server -> Instance).
+restdefinitions:
+  project:
+    enabled: true
+    resourceGroup: identity.openstack.krateo.io
+    resourceKind: IdentityProject
+  user:
+    enabled: true
+    resourceGroup: identity.openstack.krateo.io
+    resourceKind: IdentityUser
+  role:
+    enabled: true
+    resourceGroup: identity.openstack.krateo.io
+    resourceKind: IdentityRole
+  group:
+    # Disabled by default: crdgen currently emits an undefined Go type `Group`
+    # for the `group` envelope property and fails CRD generation ("unknown type
+    # Group"), whether the schema is $ref'd or inlined - the literal property
+    # name `group` is the trigger. Needs an upstream crdgen fix; the OAS/RD are
+    # shipped ready to enable once that lands.
+    enabled: false
+    resourceGroup: identity.openstack.krateo.io
+    resourceKind: IdentityGroup
+  domain:
+    enabled: true
+    resourceGroup: identity.openstack.krateo.io
+    resourceKind: IdentityDomain
+  role_assignment:
+    # A role grant is an action (PUT/HEAD/DELETE on a composite path), not a
+    # CRUD object - modeled as a single-fire CR like KOG's NodeProvision.
+    enabled: true
+    resourceGroup: identity.openstack.krateo.io
+    resourceKind: IdentityRoleAssignment
+  application_credential:
+    # Disabled by default: the create POST /users/{user_id}/application_credentials
+    # body must be only {application_credential:{...}}, but KOG sends the whole
+    # spec, so the path-only `user_id` leaks into the body and Keystone returns
+    # 400. The CRD generates fine and get/delete work; enabling create cleanly
+    # needs a KOG exclude-from-body mapping (same caveat as Nova's quota set).
+    enabled: false
+    resourceGroup: identity.openstack.krateo.io
+    resourceKind: IdentityApplicationCredential
+
+# auth-bridge: a stateless Keystone-auth reverse proxy (openstacksdk). Unlike a
+# static-token nginx rewrite it auto-refreshes the token and works in-cluster
+# (no public-DNS resolver trap). The generated controller's plain-HTTP calls go
+# here; the proxy injects a fresh X-Auth-Token and forwards to the discovered
+# identity endpoint.
+#
+# You supply a clouds.yaml (admin creds) in a Secret named by cloudsSecret:
+#   kubectl create secret generic keystone-clouds --from-file=clouds.yaml=clouds.yaml
+authBridge:
+  enabled: true
+  replicaCount: 1
+  # Secret holding clouds.yaml (key: clouds.yaml). Created out-of-band.
+  cloudsSecret: keystone-clouds
+  # Cloud name inside clouds.yaml.
+  osCloud: openstack
+  # Catalog service type to proxy and the interface to discover.
+  serviceType: identity
+  osInterface: internal
+  # Override the discovered endpoint (optional, e.g. http://keystone-api.openstack.svc.cluster.local:5000/v3).
+  upstreamEndpoint: ""
+  image:
+    repository: quay.io/airshipit/openstack-client
+    tag: "2026.1-ubuntu_noble"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+serviceAccount:
+  create: false
+  name: ""
+
+nameOverride: ""
+fullnameOverride: ""

@@ -1,0 +1,42 @@
+{{- if .Values.restdefinitions.domain.enabled }}
+apiVersion: ogen.krateo.io/v1alpha1
+kind: RestDefinition
+metadata:
+  name: {{ .Release.Name }}-domain
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+spec:
+  oasPath: configmap://{{ .Release.Namespace }}/{{ .Release.Name }}-domain/domain.yaml
+  resourceGroup: {{ .Values.restdefinitions.domain.resourceGroup }}
+  resource:
+    # Keystone wraps the payload in a `domain` envelope -> identifiers/status under .domain.*
+    kind: {{ .Values.restdefinitions.domain.resourceKind }}
+    identifiers:
+      - domain.id
+      - domain.name
+    additionalStatusFields:
+      - domain.id
+      - domain.domain_id
+    verbsDescription:
+      - action: create
+        method: POST
+        path: /domains
+      - action: get
+        method: GET
+        path: /domains/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: status.domain.id
+      - action: update
+        method: PATCH
+        path: /domains/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: status.domain.id
+      - action: delete
+        method: DELETE
+        path: /domains/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: status.domain.id
+{{- end }}

@@ -1,0 +1,137 @@
+openapi: 3.0.3
+info:
+  title: OpenStack Identity (Keystone) v3 - Users (KOG-friendly subset)
+  description: |
+    Hand-crafted OpenAPI 3.0 subset of the Keystone v3 Identity API covering the
+    Users lifecycle (create / get / update / delete). Keystone wraps the payload
+    in a `user` envelope, so the CR uses `spec.user.*`; the CRD Kind is
+    `IdentityUser` to avoid colliding with that envelope property in crdgen. Paths are
+    relative to the identity endpoint base (.../v3), which the auth-bridge forwards to.
+  version: "3.0"
+servers:
+  - url: {{ include "openstack-keystone-operator-kog.authBridgeUrl" . }}
+    description: In-cluster Keystone-auth proxy
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+  schemas:
+    UserSpec:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: User name.
+        domain_id:
+          type: string
+          description: Owning domain ID.
+        password:
+          type: string
+          description: Initial password.
+        email:
+          type: string
+        enabled:
+          type: boolean
+        default_project_id:
+          type: string
+        description:
+          type: string
+    UserCreateRequest:
+      type: object
+      required:
+        - user
+      properties:
+        user:
+          $ref: '#/components/schemas/UserSpec'
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        domain_id:
+          type: string
+        enabled:
+          type: boolean
+        email:
+          type: string
+    UserEnvelope:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserSummary'
+security:
+  - bearer: []
+paths:
+  /users:
+    post:
+      operationId: createUser
+      summary: Create a user
+      tags: [users]
+      security:
+        - bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEnvelope'
+  /users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getUser
+      summary: Show user details
+      tags: [users]
+      security:
+        - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEnvelope'
+    patch:
+      operationId: updateUser
+      summary: Update a user
+      tags: [users]
+      security:
+        - bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEnvelope'
+    delete:
+      operationId: deleteUser
+      summary: Delete a user
+      tags: [users]
+      security:
+        - bearer: []
+      responses:
+        '204':
+          description: Deleted

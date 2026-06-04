@@ -1,0 +1,42 @@
+{{- if .Values.restdefinitions.group.enabled }}
+apiVersion: ogen.krateo.io/v1alpha1
+kind: RestDefinition
+metadata:
+  name: {{ .Release.Name }}-group
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+spec:
+  oasPath: configmap://{{ .Release.Namespace }}/{{ .Release.Name }}-group/group.yaml
+  resourceGroup: {{ .Values.restdefinitions.group.resourceGroup }}
+  resource:
+    # Keystone wraps the payload in a `group` envelope -> identifiers/status under .group.*
+    kind: {{ .Values.restdefinitions.group.resourceKind }}
+    identifiers:
+      - group.id
+      - group.name
+    additionalStatusFields:
+      - group.id
+      - group.domain_id
+    verbsDescription:
+      - action: create
+        method: POST
+        path: /groups
+      - action: get
+        method: GET
+        path: /groups/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: status.group.id
+      - action: update
+        method: PATCH
+        path: /groups/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: status.group.id
+      - action: delete
+        method: DELETE
+        path: /groups/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: status.group.id
+{{- end }}

@@ -1,0 +1,42 @@
+{{- if .Values.restdefinitions.project.enabled }}
+apiVersion: ogen.krateo.io/v1alpha1
+kind: RestDefinition
+metadata:
+  name: {{ .Release.Name }}-project
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+spec:
+  oasPath: configmap://{{ .Release.Namespace }}/{{ .Release.Name }}-project/project.yaml
+  resourceGroup: {{ .Values.restdefinitions.project.resourceGroup }}
+  resource:
+    # Keystone wraps the payload in a `project` envelope -> identifiers/status under .project.*
+    kind: {{ .Values.restdefinitions.project.resourceKind }}
+    identifiers:
+      - project.id
+      - project.name
+    additionalStatusFields:
+      - project.id
+      - project.domain_id
+    verbsDescription:
+      - action: create
+        method: POST
+        path: /projects
+      - action: get
+        method: GET
+        path: /projects/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: status.project.id
+      - action: update
+        method: PATCH
+        path: /projects/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: status.project.id
+      - action: delete
+        method: DELETE
+        path: /projects/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: status.project.id
+{{- end }}

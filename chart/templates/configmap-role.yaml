@@ -1,0 +1,11 @@
+{{- if .Values.restdefinitions.role.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-role
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+data:
+  role.yaml: |
+{{ tpl (.Files.Get "assets/role.yaml") . | indent 4 }}
+{{- end }}

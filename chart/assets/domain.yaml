@@ -1,0 +1,126 @@
+openapi: 3.0.3
+info:
+  title: OpenStack Identity (Keystone) v3 - Domains (KOG-friendly subset)
+  description: |
+    Hand-crafted OpenAPI 3.0 subset of the Keystone v3 Identity API covering the
+    Domains lifecycle (create / get / update / delete). Keystone wraps the payload
+    in a `domain` envelope, so the CR uses `spec.domain.*`; the CRD Kind is
+    `IdentityDomain` to avoid colliding with that envelope property in crdgen. Paths are
+    relative to the identity endpoint base (.../v3), which the auth-bridge forwards to.
+  version: "3.0"
+servers:
+  - url: {{ include "openstack-keystone-operator-kog.authBridgeUrl" . }}
+    description: In-cluster Keystone-auth proxy
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+  schemas:
+    DomainSpec:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Domain name.
+        description:
+          type: string
+        enabled:
+          type: boolean
+          description: Domains must be disabled (enabled:false) before they can be deleted.
+    DomainCreateRequest:
+      type: object
+      required:
+        - domain
+      properties:
+        domain:
+          $ref: '#/components/schemas/DomainSpec'
+    DomainSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        enabled:
+          type: boolean
+        description:
+          type: string
+    DomainEnvelope:
+      type: object
+      properties:
+        domain:
+          $ref: '#/components/schemas/DomainSummary'
+security:
+  - bearer: []
+paths:
+  /domains:
+    post:
+      operationId: createDomain
+      summary: Create a domain
+      tags: [domains]
+      security:
+        - bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DomainCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainEnvelope'
+  /domains/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getDomain
+      summary: Show domain details
+      tags: [domains]
+      security:
+        - bearer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainEnvelope'
+    patch:
+      operationId: updateDomain
+      summary: Update a domain
+      tags: [domains]
+      security:
+        - bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DomainCreateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainEnvelope'
+    delete:
+      operationId: deleteDomain
+      summary: Delete a domain
+      tags: [domains]
+      security:
+        - bearer: []
+      responses:
+        '204':
+          description: Deleted

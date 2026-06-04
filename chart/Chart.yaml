@@ -1,0 +1,23 @@
+apiVersion: v2
+name: openstack-keystone-operator-kog
+description: |
+  Krateo Operator Generator (KOG) packaging that turns OpenStack Keystone
+  identity resources (projects, users, roles, groups, domains, role
+  assignments and application credentials) into native Kubernetes custom
+  resources, driven by oasgen-provider + rest-dynamic-controller.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - krateo
+  - kog
+  - oasgen-provider
+  - openstack
+  - keystone
+  - identity
+  - operator
+home: https://github.com/braghettos/openstack-keystone-operator-kog
+sources:
+  - https://github.com/braghettos/openstack-keystone-operator-kog
+maintainers:
+  - name: braghettos

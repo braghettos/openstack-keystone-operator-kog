@@ -1,0 +1,42 @@
+{{- if .Values.restdefinitions.user.enabled }}
+apiVersion: ogen.krateo.io/v1alpha1
+kind: RestDefinition
+metadata:
+  name: {{ .Release.Name }}-user
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+spec:
+  oasPath: configmap://{{ .Release.Namespace }}/{{ .Release.Name }}-user/user.yaml
+  resourceGroup: {{ .Values.restdefinitions.user.resourceGroup }}
+  resource:
+    # Keystone wraps the payload in a `user` envelope -> identifiers/status under .user.*
+    kind: {{ .Values.restdefinitions.user.resourceKind }}
+    identifiers:
+      - user.id
+      - user.name
+    additionalStatusFields:
+      - user.id
+      - user.domain_id
+    verbsDescription:
+      - action: create
+        method: POST
+        path: /users
+      - action: get
+        method: GET
+        path: /users/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: status.user.id
+      - action: update
+        method: PATCH
+        path: /users/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: status.user.id
+      - action: delete
+        method: DELETE
+        path: /users/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: status.user.id
+{{- end }}

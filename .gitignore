@@ -1,0 +1,18 @@
+# Helm
+*.tgz
+chart/charts/
+chart/Chart.lock
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+
+# Local credentials / overrides
+clouds.yaml
+.env
+.env.local
+*.kubeconfig
+*openrc*.sh
