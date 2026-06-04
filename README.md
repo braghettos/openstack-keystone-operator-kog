@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/krateo-loves-keystone.png" alt="Krateo loves OpenStack Keystone" width="900"/>
+</p>
+
 # openstack-keystone-operator-kog
 
 Krateo Operator Generator (KOG) packaging that turns **OpenStack Keystone (identity v3)**
