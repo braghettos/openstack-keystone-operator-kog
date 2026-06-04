@@ -2,6 +2,9 @@
   <img src="docs/krateo-loves-keystone.png" alt="Krateo loves OpenStack Keystone" width="900"/>
 </p>
 
+> 📖 **[Quickstart](docs/quickstart.md)** — install the operator and see a resource appear in Horizon.
+
+
 # openstack-keystone-operator-kog
 
 Krateo Operator Generator (KOG) packaging that turns **OpenStack Keystone (identity v3)**
