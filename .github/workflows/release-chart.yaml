@@ -1,12 +1,9 @@
 name: release-chart
 
-# Publishes the chart to the org's classic OCI namespace on a SemVer tag (or manual
-# dispatch): oci://ghcr.io/<owner>/charts/<chart-name>:<version>. The Krateo
-# CompositionDefinition's spec.chart.url points at that artifact.
-#
-# helm package does NOT render templates, so charts that require runtime input
-# (authBridge.upstreamUrl / cloudsSecret / upstreamEndpoint) still publish cleanly;
-# helm lint validates the chart + its values.schema.json against values.yaml.
+# Publishes the chart to oci://ghcr.io/<owner>/charts/<name> on a SemVer tag (matching
+# Chart.yaml version) or manual dispatch. The CompositionDefinition's spec.chart.url
+# points at that artifact. helm package does not render templates, so charts requiring
+# runtime input still publish; helm lint validates the chart + its values.schema.json.
 
 on:
   push:
@@ -41,12 +38,11 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           tag="$GITHUB_REF_NAME"
-          chart_version="$(awk '/^version:/ {print $2; exit}' "$CHART_DIR/Chart.yaml")"
-          if [ "$tag" != "$chart_version" ]; then
-            echo "::error::git tag '$tag' does not match Chart.yaml version '$chart_version'"
+          cv="$(awk '/^version:/ {print $2; exit}' "$CHART_DIR/Chart.yaml")"
+          if [ "$tag" != "$cv" ]; then
+            echo "::error::git tag '$tag' does not match Chart.yaml version '$cv'"
             exit 1
           fi
-          echo "tag and chart version match: $tag"
 
       - name: helm package
         run: helm package "$CHART_DIR" --destination dist
@@ -56,9 +52,15 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" \
             | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
 
-      - name: helm push to the charts/ namespace
+      - name: helm push (retry on GHCR first-push flakiness)
         run: |
           owner="${GITHUB_REPOSITORY_OWNER,,}"
           for tgz in dist/*.tgz; do
-            helm push "$tgz" "oci://ghcr.io/${owner}/charts"
+            ok=0
+            for attempt in 1 2 3 4 5; do
+              helm push "$tgz" "oci://ghcr.io/${owner}/charts" && { ok=1; break; }
+              echo "push attempt $attempt failed (GHCR flakiness); retrying in 10s"
+              sleep 10
+            done
+            [ "$ok" = 1 ] || { echo "::error::push of $tgz failed after 5 attempts"; exit 1; }
           done
