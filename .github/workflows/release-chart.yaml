@@ -1,0 +1,64 @@
+name: release-chart
+
+# Publishes the chart to the org's classic OCI namespace on a SemVer tag (or manual
+# dispatch): oci://ghcr.io/<owner>/charts/<chart-name>:<version>. The Krateo
+# CompositionDefinition's spec.chart.url points at that artifact.
+#
+# helm package does NOT render templates, so charts that require runtime input
+# (authBridge.upstreamUrl / cloudsSecret / upstreamEndpoint) still publish cleanly;
+# helm lint validates the chart + its values.schema.json against values.yaml.
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  HELM_VERSION: v3.19.0
+  CHART_DIR: chart
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: helm lint
+        run: helm lint "$CHART_DIR"
+
+      - name: Verify git tag matches Chart.yaml version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          tag="$GITHUB_REF_NAME"
+          chart_version="$(awk '/^version:/ {print $2; exit}' "$CHART_DIR/Chart.yaml")"
+          if [ "$tag" != "$chart_version" ]; then
+            echo "::error::git tag '$tag' does not match Chart.yaml version '$chart_version'"
+            exit 1
+          fi
+          echo "tag and chart version match: $tag"
+
+      - name: helm package
+        run: helm package "$CHART_DIR" --destination dist
+
+      - name: helm registry login (GHCR)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" \
+            | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+      - name: helm push to the charts/ namespace
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          for tgz in dist/*.tgz; do
+            helm push "$tgz" "oci://ghcr.io/${owner}/charts"
+          done
