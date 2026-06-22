@@ -1,0 +1,43 @@
+# Example Composition for the openstack-keystone-operator-kog blueprint.
+#
+# Applying this installs the KOG *operator*: the auth-bridge proxy plus the
+# enabled per-resource RestDefinitions (which generate the Identity* CRDs).
+# It does NOT create individual Keystone objects - the per-resource CRs
+# (IdentityProject / IdentityUser / IdentityRole / ...) live in
+# chart/samples/identity-resources.yaml and are applied after the CRDs exist.
+#
+# The apiVersion/Kind below follow the Krateo crdgen convention:
+#   group   = composition.krateo.io
+#   version = v0-1-0   (derived from chart version 0.1.0)
+#   Kind    = OpenstackKeystoneOperatorKog   (PascalCase of the CD name, hyphens removed)
+#
+# Prereq: a Secret named by authBridge.cloudsSecret holding clouds.yaml, e.g.
+#   kubectl create secret generic keystone-clouds \
+#     --from-file=clouds.yaml=clouds.yaml -n krateo-system
+apiVersion: composition.krateo.io/v0-1-0
+kind: OpenstackKeystoneOperatorKog
+metadata:
+  name: openstack-keystone-kog
+  namespace: krateo-system
+spec:
+  authBridge:
+    enabled: true
+    cloudsSecret: keystone-clouds
+    # The key user input: the in-cluster Keystone identity endpoint.
+    upstreamEndpoint: http://keystone-api.openstack.svc.cluster.local:5000/v3
+  restdefinitions:
+    project:
+      enabled: true
+    user:
+      enabled: true
+    role:
+      enabled: true
+    role_assignment:
+      enabled: true
+    # Off by default (documented crdgen / body-leak caveats):
+    domain:
+      enabled: true
+    group:
+      enabled: false
+    application_credential:
+      enabled: false

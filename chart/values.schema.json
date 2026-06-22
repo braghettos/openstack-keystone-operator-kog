@@ -1,0 +1,396 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "OpenStack Keystone KOG",
+  "description": "Krateo Operator Generator (KOG) packaging that turns OpenStack Keystone identity resources (projects, users, roles, groups, domains, role assignments, application credentials) into native Kubernetes custom resources. A Composition of this chart lets a user point the bundled auth-bridge at their Keystone endpoint and toggle which per-resource RestDefinitions are emitted.",
+  "required": [
+    "authBridge"
+  ],
+  "properties": {
+    "restdefinitions": {
+      "type": "object",
+      "title": "RestDefinitions",
+      "description": "Per-resource RestDefinition toggles. Each Keystone payload is envelope-wrapped, so every Kind is prefixed Identity* to avoid the crdgen Kind-vs-property collision.",
+      "properties": {
+        "project": {
+          "type": "object",
+          "title": "IdentityProject",
+          "description": "Keystone /v3/projects (create/get/update/delete).",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "Enabled",
+              "description": "Emit the IdentityProject RestDefinition.",
+              "default": true
+            },
+            "resourceGroup": {
+              "type": "string",
+              "title": "Resource group",
+              "description": "API group for the generated CRD.",
+              "default": "identity.openstack.krateo.io"
+            },
+            "resourceKind": {
+              "type": "string",
+              "title": "Resource kind",
+              "description": "Kind for the generated CRD.",
+              "default": "IdentityProject"
+            }
+          }
+        },
+        "user": {
+          "type": "object",
+          "title": "IdentityUser",
+          "description": "Keystone /v3/users (create/get/update/delete).",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "Enabled",
+              "description": "Emit the IdentityUser RestDefinition.",
+              "default": true
+            },
+            "resourceGroup": {
+              "type": "string",
+              "title": "Resource group",
+              "description": "API group for the generated CRD.",
+              "default": "identity.openstack.krateo.io"
+            },
+            "resourceKind": {
+              "type": "string",
+              "title": "Resource kind",
+              "description": "Kind for the generated CRD.",
+              "default": "IdentityUser"
+            }
+          }
+        },
+        "role": {
+          "type": "object",
+          "title": "IdentityRole",
+          "description": "Keystone /v3/roles (create/get/update/delete).",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "Enabled",
+              "description": "Emit the IdentityRole RestDefinition.",
+              "default": true
+            },
+            "resourceGroup": {
+              "type": "string",
+              "title": "Resource group",
+              "description": "API group for the generated CRD.",
+              "default": "identity.openstack.krateo.io"
+            },
+            "resourceKind": {
+              "type": "string",
+              "title": "Resource kind",
+              "description": "Kind for the generated CRD.",
+              "default": "IdentityRole"
+            }
+          }
+        },
+        "group": {
+          "type": "object",
+          "title": "IdentityGroup",
+          "description": "Keystone /v3/groups. Disabled by default: crdgen emits an undefined Go type for the 'group' envelope property and fails CRD generation; ships ready to enable once the upstream crdgen fix lands.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "Enabled",
+              "description": "Emit the IdentityGroup RestDefinition (off by default due to a crdgen quirk).",
+              "default": false
+            },
+            "resourceGroup": {
+              "type": "string",
+              "title": "Resource group",
+              "description": "API group for the generated CRD.",
+              "default": "identity.openstack.krateo.io"
+            },
+            "resourceKind": {
+              "type": "string",
+              "title": "Resource kind",
+              "description": "Kind for the generated CRD.",
+              "default": "IdentityGroup"
+            }
+          }
+        },
+        "domain": {
+          "type": "object",
+          "title": "IdentityDomain",
+          "description": "Keystone /v3/domains (create/get/update/delete). A domain must be disabled (update with enabled:false) before it can be deleted.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "Enabled",
+              "description": "Emit the IdentityDomain RestDefinition.",
+              "default": true
+            },
+            "resourceGroup": {
+              "type": "string",
+              "title": "Resource group",
+              "description": "API group for the generated CRD.",
+              "default": "identity.openstack.krateo.io"
+            },
+            "resourceKind": {
+              "type": "string",
+              "title": "Resource kind",
+              "description": "Kind for the generated CRD.",
+              "default": "IdentityDomain"
+            }
+          }
+        },
+        "role_assignment": {
+          "type": "object",
+          "title": "IdentityRoleAssignment",
+          "description": "Keystone role grant (PUT/DELETE on a composite project/user/role path), modeled as a single-fire idempotent CR.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "Enabled",
+              "description": "Emit the IdentityRoleAssignment RestDefinition.",
+              "default": true
+            },
+            "resourceGroup": {
+              "type": "string",
+              "title": "Resource group",
+              "description": "API group for the generated CRD.",
+              "default": "identity.openstack.krateo.io"
+            },
+            "resourceKind": {
+              "type": "string",
+              "title": "Resource kind",
+              "description": "Kind for the generated CRD.",
+              "default": "IdentityRoleAssignment"
+            }
+          }
+        },
+        "application_credential": {
+          "type": "object",
+          "title": "IdentityApplicationCredential",
+          "description": "Keystone /v3/users/{user_id}/application_credentials. Disabled by default: KOG leaks the path-only user_id into the create body and Keystone returns 400; get/delete work and the CRD generates. Enabling clean create needs a KOG exclude-from-body mapping.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "Enabled",
+              "description": "Emit the IdentityApplicationCredential RestDefinition (off by default due to a create body-leak).",
+              "default": false
+            },
+            "resourceGroup": {
+              "type": "string",
+              "title": "Resource group",
+              "description": "API group for the generated CRD.",
+              "default": "identity.openstack.krateo.io"
+            },
+            "resourceKind": {
+              "type": "string",
+              "title": "Resource kind",
+              "description": "Kind for the generated CRD.",
+              "default": "IdentityApplicationCredential"
+            }
+          }
+        }
+      }
+    },
+    "authBridge": {
+      "type": "object",
+      "title": "Auth bridge",
+      "description": "A stateless openstacksdk reverse proxy: it authenticates with a clouds.yaml, discovers the Keystone identity endpoint, and injects a fresh X-Auth-Token on every call. The generated controllers' plain-HTTP requests are routed through it.",
+      "required": [
+        "upstreamEndpoint"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "Enabled",
+          "description": "Deploy the auth-bridge proxy (Deployment + Service + ConfigMap).",
+          "default": true
+        },
+        "replicaCount": {
+          "type": "integer",
+          "title": "Replica count",
+          "description": "Number of auth-bridge replicas.",
+          "minimum": 1,
+          "default": 1
+        },
+        "cloudsSecret": {
+          "type": "string",
+          "title": "clouds.yaml Secret",
+          "description": "Name of the Secret holding clouds.yaml (key: clouds.yaml). Created out-of-band with admin credentials.",
+          "default": "keystone-clouds"
+        },
+        "osCloud": {
+          "type": "string",
+          "title": "OS_CLOUD",
+          "description": "Cloud name inside clouds.yaml.",
+          "default": "openstack"
+        },
+        "serviceType": {
+          "type": "string",
+          "title": "Service type",
+          "description": "Keystone catalog service type to proxy.",
+          "default": "identity"
+        },
+        "osInterface": {
+          "type": "string",
+          "title": "OS interface",
+          "description": "Catalog interface to discover (public/internal/admin).",
+          "default": "internal"
+        },
+        "upstreamEndpoint": {
+          "type": "string",
+          "title": "Upstream endpoint",
+          "description": "THE key user input: the upstream Keystone identity endpoint from the catalog, e.g. http://keystone-api.openstack.svc.cluster.local:5000/v3. Leave empty to let the proxy auto-discover it from clouds.yaml.",
+          "default": ""
+        },
+        "image": {
+          "type": "object",
+          "title": "Image",
+          "description": "Container image for the auth-bridge proxy.",
+          "properties": {
+            "repository": {
+              "type": "string",
+              "title": "Repository",
+              "description": "Image repository (must contain openstacksdk + the proxy script).",
+              "default": "quay.io/airshipit/openstack-client"
+            },
+            "tag": {
+              "type": "string",
+              "title": "Tag",
+              "description": "Image tag.",
+              "default": "2026.1-ubuntu_noble"
+            },
+            "pullPolicy": {
+              "type": "string",
+              "title": "Pull policy",
+              "description": "Image pull policy.",
+              "enum": [
+                "Always",
+                "IfNotPresent",
+                "Never"
+              ],
+              "default": "IfNotPresent"
+            }
+          }
+        },
+        "service": {
+          "type": "object",
+          "title": "Service",
+          "description": "Service exposing the auth-bridge inside the cluster.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "title": "Type",
+              "description": "Kubernetes Service type.",
+              "enum": [
+                "ClusterIP",
+                "NodePort",
+                "LoadBalancer"
+              ],
+              "default": "ClusterIP"
+            },
+            "port": {
+              "type": "integer",
+              "title": "Port",
+              "description": "Service port.",
+              "minimum": 1,
+              "maximum": 65535,
+              "default": 8080
+            }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "title": "Resources",
+          "description": "Compute resource requests/limits for the proxy container.",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "title": "Requests",
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "title": "CPU request",
+                  "default": "20m"
+                },
+                "memory": {
+                  "type": "string",
+                  "title": "Memory request",
+                  "default": "64Mi"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "title": "Limits",
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "title": "CPU limit",
+                  "default": "500m"
+                },
+                "memory": {
+                  "type": "string",
+                  "title": "Memory limit",
+                  "default": "256Mi"
+                }
+              }
+            }
+          }
+        },
+        "podAnnotations": {
+          "type": "object",
+          "title": "Pod annotations",
+          "description": "Annotations added to the auth-bridge pod.",
+          "default": {}
+        },
+        "nodeSelector": {
+          "type": "object",
+          "title": "Node selector",
+          "description": "Node selector for the auth-bridge pod.",
+          "default": {}
+        },
+        "tolerations": {
+          "type": "array",
+          "title": "Tolerations",
+          "description": "Tolerations for the auth-bridge pod.",
+          "default": []
+        },
+        "affinity": {
+          "type": "object",
+          "title": "Affinity",
+          "description": "Affinity rules for the auth-bridge pod.",
+          "default": {}
+        }
+      }
+    },
+    "serviceAccount": {
+      "type": "object",
+      "title": "Service account",
+      "description": "Service account settings for the chart workloads.",
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "title": "Create",
+          "description": "Create a ServiceAccount.",
+          "default": false
+        },
+        "name": {
+          "type": "string",
+          "title": "Name",
+          "description": "Name of the ServiceAccount to use (empty uses the default).",
+          "default": ""
+        }
+      }
+    },
+    "nameOverride": {
+      "type": "string",
+      "title": "Name override",
+      "description": "Override the chart name used in resource names.",
+      "default": ""
+    },
+    "fullnameOverride": {
+      "type": "string",
+      "title": "Fullname override",
+      "description": "Override the fully qualified release name.",
+      "default": ""
+    }
+  }
+}
