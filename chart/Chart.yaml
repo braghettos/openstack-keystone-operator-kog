@@ -15,9 +15,16 @@ keywords:
   - openstack
   - keystone
   - identity
+  - security
   - operator
 home: https://github.com/braghettos/openstack-keystone-operator-kog
 sources:
   - https://github.com/braghettos/openstack-keystone-operator-kog
 maintainers:
   - name: braghettos
+icon: https://raw.githubusercontent.com/krateoplatformops/krateo/main/docs/media/logo.svg
+annotations:
+  krateo.io/category: security
+  krateo.io/display-name: OpenStack Keystone KOG
+  krateo.io/maturity: beta
+  krateoSupportedVersion: ">= 2.5.1"
