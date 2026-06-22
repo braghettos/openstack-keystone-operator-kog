@@ -22,7 +22,7 @@ sources:
   - https://github.com/braghettos/openstack-keystone-operator-kog
 maintainers:
   - name: braghettos
-icon: https://raw.githubusercontent.com/krateoplatformops/krateo/main/docs/media/logo.svg
+icon: https://www.openstack.org/themes/openstack/images/project-mascots/Keystone/OpenStack_Project_Keystone_vertical.png
 annotations:
   krateo.io/category: security
   krateo.io/display-name: OpenStack Keystone KOG
