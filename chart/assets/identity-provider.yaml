@@ -96,6 +96,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IdPEnvelope'
+    patch:
+      operationId: patchIdentityProvider
+      summary: Update a federation identity provider
+      tags: [identity-providers]
+      security:
+        - bearer: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdPCreateRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdPEnvelope'
     get:
       operationId: getIdentityProvider
       summary: Show identity provider

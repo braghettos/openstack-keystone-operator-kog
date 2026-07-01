@@ -29,7 +29,8 @@ spec:
           - inPath: id
             inCustomResource: spec.id
       - action: update
-        method: PUT
+        # Keystone: PUT is create-only (409 if exists); update uses PATCH.
+        method: PATCH
         path: /OS-FEDERATION/mappings/{id}
         requestFieldMapping:
           - inPath: id

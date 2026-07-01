@@ -83,6 +83,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProtocolEnvelope'
+    patch:
+      operationId: patchProtocol
+      summary: Update a federation protocol on an IdP
+      tags: [protocols]
+      security:
+        - bearer: []
+      parameters:
+        - name: idp_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProtocolCreateRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProtocolEnvelope'
     get:
       operationId: getProtocol
       summary: Show protocol

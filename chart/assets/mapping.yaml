@@ -88,6 +88,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MappingEnvelope'
+    patch:
+      operationId: patchMapping
+      summary: Update a federation mapping
+      tags: [mappings]
+      security:
+        - bearer: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MappingCreateRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MappingEnvelope'
     get:
       operationId: getMapping
       summary: Show mapping
