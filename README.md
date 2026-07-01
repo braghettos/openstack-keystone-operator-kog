@@ -27,6 +27,9 @@ reconcile it into a real Keystone object.
 | `IdentityRoleAssignment` | `PUT/DELETE /v3/projects/{p}/users/{u}/roles/{r}` | grant / revoke (idempotent) | ✅ on |
 | `IdentityGroup` | `/v3/groups` | create / get / update / delete | ⚠️ off — crdgen quirk |
 | `IdentityApplicationCredential` | `/v3/users/{u}/application_credentials` | create / get / delete | ⚠️ off — body-leak |
+| `IdentityFederationProvider` | `/v3/OS-FEDERATION/identity_providers/{id}` | create / get / update / delete | ✅ on |
+| `IdentityMapping` | `/v3/OS-FEDERATION/mappings/{id}` | create / get / update / delete | ✅ on |
+| `IdentityFederationProtocol` | `/v3/OS-FEDERATION/identity_providers/{idp}/protocols/{id}` | create / get / update / delete | ✅ on |
 
 Validated end-to-end against a Krateo-blueprint Keystone: `IdentityProject`, `IdentityUser`,
 `IdentityRole` create real objects (HTTP 201) and `IdentityRoleAssignment` grants a role
@@ -38,6 +41,29 @@ prefixed `Identity*` to avoid the crdgen Kind-vs-property collision (the same re
 `Server` → `Instance`). Unlike Nova/Ironic, Keystone updates are plain `PATCH` (not JSON-Patch),
 so CRUD resources carry an `update` verb. *Domains must be disabled (`enabled:false`) before they
 can be deleted — `update` first, then `delete`.
+
+## Federation (OS-FEDERATION)
+
+The three `IdentityFederation*` / `IdentityMapping` kinds make Keystone's OIDC/SAML
+federation trust GitOps-native — declare an external IdP, a claims→identity mapping,
+and the protocol binding as CRs instead of hand-running `openstack federation …`.
+This was validated **live end-to-end** (GitHub → Keycloak → Keystone → Horizon,
+federated user auto-provisioned into a project). See
+[`chart/samples/federation.yaml`](chart/samples/federation.yaml).
+
+Unlike projects/users (POST → server UUID), a federation object is addressed by a
+**client-chosen id** in the path (`PUT`), so `id` is a user-set natural-key spec field
+— no `findby` needed. Four Keystone-specific gotchas the samples encode:
+
+- **Update is `PATCH`, not `PUT`.** Keystone's `PUT /OS-FEDERATION/.../{id}` is
+  create-only and returns **409** if the object exists; the `update` verb maps to PATCH.
+- **No `domain` in the mapping's `projects` local rule** — Keystone rejects it; the
+  project domain is inferred from the `user` rule.
+- **Pin the IdP's `domain_id`** to your managed domain, or Keystone auto-creates a
+  per-IdP domain and auto-provisioned projects land there, orphaned. Pinning it makes
+  auto-provisioning **reuse** the managed project (matched by name in that domain).
+- Recreating an IdP with the same id needs stale **shadow-user cleanup** in the
+  federation domain (otherwise re-login hits `409 store federated_user - Duplicate`).
 
 ## Auth: the openstacksdk proxy (auto-refreshing)
 
