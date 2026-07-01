@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
 spec:
-  oasPath: configmap://{{ .Release.Namespace }}/{{ .Release.Name }}-federation-protocol/federation-protocol.yaml
+  oasPath: configmap://{{ .Release.Namespace }}/{{ .Release.Name }}-federation-protocol/federationprotocol.yaml
   resourceGroup: {{ .Values.restdefinitions.federation_protocol.resourceGroup }}
   resource:
     # Federation protocol: composite client-chosen key {idp_id}+{id} (PUT).

@@ -6,6 +6,6 @@ metadata:
   labels:
     {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
 data:
-  identity-provider.yaml: |
+  identityprovider.yaml: |
 {{ tpl (.Files.Get "assets/identity-provider.yaml") . | indent 4 }}
 {{- end }}

@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
 spec:
-  oasPath: configmap://{{ .Release.Namespace }}/{{ .Release.Name }}-identity-provider/identity-provider.yaml
+  oasPath: configmap://{{ .Release.Namespace }}/{{ .Release.Name }}-identity-provider/identityprovider.yaml
   resourceGroup: {{ .Values.restdefinitions.identity_provider.resourceGroup }}
   resource:
     # Federation IdP: addressed by a client-chosen id (PUT). `id` is a user-set
