@@ -1,0 +1,124 @@
+openapi: 3.0.3
+info:
+  title: OpenStack Identity (Keystone) v3 - Federation Mappings (KOG subset)
+  description: |
+    Keystone federation mapping: rules that turn IdP assertions (OIDC claims) into
+    a local Keystone user + group/project assignments. Addressed by a client-chosen
+    id (PUT), so `id` is a natural-key spec field. The rules array is free-form
+    (Keystone's mapping DSL), preserved as-is. Kind is `IdentityMapping`. Paths are
+    relative to the identity base (.../v3).
+  version: "3.0"
+servers:
+  - url: {{ include "openstack-keystone-operator-kog.authBridgeUrl" . }}
+    description: In-cluster Keystone-auth proxy
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+  schemas:
+    MappingRule:
+      type: object
+      additionalProperties: true
+      description: A single Keystone mapping rule (local/remote). Free-form.
+    MappingSpec:
+      type: object
+      required:
+        - rules
+      properties:
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/MappingRule'
+        schema_version:
+          type: string
+    MappingCreateRequest:
+      type: object
+      required:
+        - mapping
+      properties:
+        mapping:
+          $ref: '#/components/schemas/MappingSpec'
+    MappingSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/MappingRule'
+    MappingEnvelope:
+      type: object
+      properties:
+        mapping:
+          $ref: '#/components/schemas/MappingSummary'
+security:
+  - bearer: []
+paths:
+  /OS-FEDERATION/mappings/{id}:
+    put:
+      operationId: putMapping
+      summary: Create or update a federation mapping
+      tags: [mappings]
+      security:
+        - bearer: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MappingCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MappingEnvelope'
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MappingEnvelope'
+    get:
+      operationId: getMapping
+      summary: Show mapping
+      tags: [mappings]
+      security:
+        - bearer: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MappingEnvelope'
+    delete:
+      operationId: deleteMapping
+      summary: Delete mapping
+      tags: [mappings]
+      security:
+        - bearer: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted

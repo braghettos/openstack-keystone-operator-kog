@@ -1,0 +1,52 @@
+{{- if .Values.restdefinitions.federation_protocol.enabled }}
+apiVersion: ogen.krateo.io/v1alpha1
+kind: RestDefinition
+metadata:
+  name: {{ .Release.Name }}-federation-protocol
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+spec:
+  oasPath: configmap://{{ .Release.Namespace }}/{{ .Release.Name }}-federation-protocol/federation-protocol.yaml
+  resourceGroup: {{ .Values.restdefinitions.federation_protocol.resourceGroup }}
+  resource:
+    # Federation protocol: composite client-chosen key {idp_id}+{id} (PUT).
+    # Both are user-set natural-key spec fields (operation-level path params).
+    kind: {{ .Values.restdefinitions.federation_protocol.resourceKind }}
+    identifiers:
+      - id
+    additionalStatusFields:
+      - protocol.id
+    verbsDescription:
+      - action: create
+        method: PUT
+        path: /OS-FEDERATION/identity_providers/{idp_id}/protocols/{id}
+        requestFieldMapping:
+          - inPath: idp_id
+            inCustomResource: spec.idp_id
+          - inPath: id
+            inCustomResource: spec.id
+      - action: get
+        method: GET
+        path: /OS-FEDERATION/identity_providers/{idp_id}/protocols/{id}
+        requestFieldMapping:
+          - inPath: idp_id
+            inCustomResource: spec.idp_id
+          - inPath: id
+            inCustomResource: spec.id
+      - action: update
+        method: PUT
+        path: /OS-FEDERATION/identity_providers/{idp_id}/protocols/{id}
+        requestFieldMapping:
+          - inPath: idp_id
+            inCustomResource: spec.idp_id
+          - inPath: id
+            inCustomResource: spec.id
+      - action: delete
+        method: DELETE
+        path: /OS-FEDERATION/identity_providers/{idp_id}/protocols/{id}
+        requestFieldMapping:
+          - inPath: idp_id
+            inCustomResource: spec.idp_id
+          - inPath: id
+            inCustomResource: spec.id
+{{- end }}

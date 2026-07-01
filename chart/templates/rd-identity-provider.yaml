@@ -1,0 +1,45 @@
+{{- if .Values.restdefinitions.identity_provider.enabled }}
+apiVersion: ogen.krateo.io/v1alpha1
+kind: RestDefinition
+metadata:
+  name: {{ .Release.Name }}-identity-provider
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+spec:
+  oasPath: configmap://{{ .Release.Namespace }}/{{ .Release.Name }}-identity-provider/identity-provider.yaml
+  resourceGroup: {{ .Values.restdefinitions.identity_provider.resourceGroup }}
+  resource:
+    # Federation IdP: addressed by a client-chosen id (PUT). `id` is a user-set
+    # natural-key spec field (operation-level path param), so no findby needed -
+    # get-by-id observes existence directly.
+    kind: {{ .Values.restdefinitions.identity_provider.resourceKind }}
+    identifiers:
+      - id
+    additionalStatusFields:
+      - identity_provider.id
+    verbsDescription:
+      - action: create
+        method: PUT
+        path: /OS-FEDERATION/identity_providers/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: spec.id
+      - action: get
+        method: GET
+        path: /OS-FEDERATION/identity_providers/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: spec.id
+      - action: update
+        method: PUT
+        path: /OS-FEDERATION/identity_providers/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: spec.id
+      - action: delete
+        method: DELETE
+        path: /OS-FEDERATION/identity_providers/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: spec.id
+{{- end }}

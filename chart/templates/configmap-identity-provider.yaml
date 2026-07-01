@@ -1,0 +1,11 @@
+{{- if .Values.restdefinitions.identity_provider.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-identity-provider
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+data:
+  identity-provider.yaml: |
+{{ tpl (.Files.Get "assets/identity-provider.yaml") . | indent 4 }}
+{{- end }}

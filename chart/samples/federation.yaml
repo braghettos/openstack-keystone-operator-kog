@@ -1,0 +1,109 @@
+# Keystone OS-FEDERATION resources — trust an external OIDC IdP (e.g. Keycloak)
+# for SSO into Horizon. All declared as CRs (no `openstack federation ...` CLI).
+#
+# The mapping uses auto-provisioning (projects local rule): a federated user is
+# mapped into a project with a role directly, so no Keystone group is needed
+# (the group resource is crdgen-blocked; see values.yaml). Requires
+# `[auto_provisioning] enabled=true` in keystone.conf.
+#
+# Prereqs: an `IdentityDomain` (e.g. `keycloak`) and `IdentityProject` (e.g.
+# `demo`) — see identity-resources.yaml. NB: Keystone reserves the domain name
+# "federated", so use another name.
+---
+apiVersion: identity.openstack.krateo.io/v1alpha1
+kind: IdentityFederationProviderConfiguration
+metadata:
+  name: keystone-config
+  namespace: krateo-system
+spec:
+  authentication:
+    bearer:
+      tokenRef:
+        name: keystone-token
+        namespace: krateo-system
+        key: token
+---
+apiVersion: identity.openstack.krateo.io/v1alpha1
+kind: IdentityMappingConfiguration
+metadata:
+  name: keystone-config
+  namespace: krateo-system
+spec:
+  authentication:
+    bearer:
+      tokenRef:
+        name: keystone-token
+        namespace: krateo-system
+        key: token
+---
+apiVersion: identity.openstack.krateo.io/v1alpha1
+kind: IdentityFederationProtocolConfiguration
+metadata:
+  name: keystone-config
+  namespace: krateo-system
+spec:
+  authentication:
+    bearer:
+      tokenRef:
+        name: keystone-token
+        namespace: krateo-system
+        key: token
+---
+# The identity provider — trusts the Keycloak realm's issuer.
+apiVersion: identity.openstack.krateo.io/v1alpha1
+kind: IdentityFederationProvider
+metadata:
+  name: keycloak
+  namespace: krateo-system
+spec:
+  configurationRef:
+    name: keystone-config
+    namespace: krateo-system
+  id: keycloak
+  identity_provider:
+    enabled: true
+    description: "Keycloak (krateo realm) OIDC identity provider"
+    remote_ids:
+      - "http://<KEYCLOAK_HOST>/realms/krateo"
+---
+# The claims -> Keystone mapping (auto-provisioning into project `demo`).
+apiVersion: identity.openstack.krateo.io/v1alpha1
+kind: IdentityMapping
+metadata:
+  name: keycloak-mapping
+  namespace: krateo-system
+spec:
+  configurationRef:
+    name: keystone-config
+    namespace: krateo-system
+  id: keycloak_mapping
+  mapping:
+    rules:
+      - local:
+          - user:
+              name: "{0}"
+              domain:
+                name: keycloak
+          - projects:
+              - name: demo
+                domain:
+                  name: keycloak
+                roles:
+                  - name: member
+        remote:
+          - type: OIDC-preferred_username
+---
+# Bind the `openid` protocol on the IdP to the mapping.
+apiVersion: identity.openstack.krateo.io/v1alpha1
+kind: IdentityFederationProtocol
+metadata:
+  name: keycloak-openid
+  namespace: krateo-system
+spec:
+  configurationRef:
+    name: keystone-config
+    namespace: krateo-system
+  idp_id: keycloak
+  id: openid
+  protocol:
+    mapping_id: keycloak_mapping

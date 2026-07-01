@@ -1,0 +1,129 @@
+openapi: 3.0.3
+info:
+  title: OpenStack Identity (Keystone) v3 - Federation Protocols (KOG subset)
+  description: |
+    Binds a federation protocol (e.g. `openid`, `saml2`) on an identity provider to
+    a mapping. Addressed by a composite client-chosen key: {idp_id} (parent IdP) and
+    {id} (protocol name), both PUT path params -> natural-key spec fields. Body is the
+    `protocol` envelope carrying mapping_id. Kind is `IdentityFederationProtocol`.
+    Paths are relative to the identity base (.../v3).
+  version: "3.0"
+servers:
+  - url: {{ include "openstack-keystone-operator-kog.authBridgeUrl" . }}
+    description: In-cluster Keystone-auth proxy
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+  schemas:
+    ProtocolSpec:
+      type: object
+      required:
+        - mapping_id
+      properties:
+        mapping_id:
+          type: string
+    ProtocolCreateRequest:
+      type: object
+      required:
+        - protocol
+      properties:
+        protocol:
+          $ref: '#/components/schemas/ProtocolSpec'
+    ProtocolSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        mapping_id:
+          type: string
+    ProtocolEnvelope:
+      type: object
+      properties:
+        protocol:
+          $ref: '#/components/schemas/ProtocolSummary'
+security:
+  - bearer: []
+paths:
+  /OS-FEDERATION/identity_providers/{idp_id}/protocols/{id}:
+    put:
+      operationId: putProtocol
+      summary: Create or update a federation protocol on an IdP
+      tags: [protocols]
+      security:
+        - bearer: []
+      parameters:
+        - name: idp_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProtocolCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProtocolEnvelope'
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProtocolEnvelope'
+    get:
+      operationId: getProtocol
+      summary: Show protocol
+      tags: [protocols]
+      security:
+        - bearer: []
+      parameters:
+        - name: idp_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProtocolEnvelope'
+    delete:
+      operationId: deleteProtocol
+      summary: Delete protocol
+      tags: [protocols]
+      security:
+        - bearer: []
+      parameters:
+        - name: idp_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted

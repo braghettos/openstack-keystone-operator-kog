@@ -45,6 +45,22 @@ restdefinitions:
     enabled: false
     resourceGroup: identity.openstack.krateo.io
     resourceKind: IdentityApplicationCredential
+  # --- OS-FEDERATION resources (federated SSO: Keystone trusts an external IdP) ---
+  # All three are PUT-by-client-chosen-id (natural key), so `id` is a user-set
+  # spec field. Kinds avoid the envelope-derived Go type (identity_provider ->
+  # IdentityProvider, mapping -> Mapping, protocol -> Protocol).
+  identity_provider:
+    enabled: true
+    resourceGroup: identity.openstack.krateo.io
+    resourceKind: IdentityFederationProvider
+  mapping:
+    enabled: true
+    resourceGroup: identity.openstack.krateo.io
+    resourceKind: IdentityMapping
+  federation_protocol:
+    enabled: true
+    resourceGroup: identity.openstack.krateo.io
+    resourceKind: IdentityFederationProtocol
 
 # auth-bridge: a stateless Keystone-auth reverse proxy (openstacksdk). Unlike a
 # static-token nginx rewrite it auto-refreshes the token and works in-cluster

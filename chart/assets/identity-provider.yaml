@@ -1,0 +1,132 @@
+openapi: 3.0.3
+info:
+  title: OpenStack Identity (Keystone) v3 - Federation Identity Providers (KOG subset)
+  description: |
+    Hand-crafted OpenAPI 3.0 subset of the Keystone v3 OS-FEDERATION API for
+    identity-provider registration. Unlike projects/domains (POST -> server UUID),
+    a federation IdP is addressed by a client-chosen id in the path (PUT to
+    create/update), so `id` is a user-set spec field (natural key). Keystone wraps
+    the payload in an `identity_provider` envelope -> CR uses spec.identity_provider.*.
+    Kind is `IdentityFederationProvider` (not `IdentityProvider`) to avoid colliding
+    with the envelope-derived Go type. Paths are relative to the identity base (.../v3).
+  version: "3.0"
+servers:
+  - url: {{ include "openstack-keystone-operator-kog.authBridgeUrl" . }}
+    description: In-cluster Keystone-auth proxy
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+  schemas:
+    IdPSpec:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        description:
+          type: string
+        domain_id:
+          type: string
+          description: Domain that owns the shadow users for this IdP.
+        remote_ids:
+          type: array
+          items:
+            type: string
+          description: The issuer(s) this IdP is trusted for (the OIDC iss).
+    IdPCreateRequest:
+      type: object
+      required:
+        - identity_provider
+      properties:
+        identity_provider:
+          $ref: '#/components/schemas/IdPSpec'
+    IdPSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        enabled:
+          type: boolean
+        description:
+          type: string
+        domain_id:
+          type: string
+        remote_ids:
+          type: array
+          items:
+            type: string
+    IdPEnvelope:
+      type: object
+      properties:
+        identity_provider:
+          $ref: '#/components/schemas/IdPSummary'
+security:
+  - bearer: []
+paths:
+  /OS-FEDERATION/identity_providers/{id}:
+    put:
+      operationId: putIdentityProvider
+      summary: Register or update a federation identity provider
+      tags: [identity-providers]
+      security:
+        - bearer: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdPCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdPEnvelope'
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdPEnvelope'
+    get:
+      operationId: getIdentityProvider
+      summary: Show identity provider
+      tags: [identity-providers]
+      security:
+        - bearer: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdPEnvelope'
+    delete:
+      operationId: deleteIdentityProvider
+      summary: Delete identity provider
+      tags: [identity-providers]
+      security:
+        - bearer: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted

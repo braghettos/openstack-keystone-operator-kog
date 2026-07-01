@@ -1,0 +1,43 @@
+{{- if .Values.restdefinitions.mapping.enabled }}
+apiVersion: ogen.krateo.io/v1alpha1
+kind: RestDefinition
+metadata:
+  name: {{ .Release.Name }}-mapping
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+spec:
+  oasPath: configmap://{{ .Release.Namespace }}/{{ .Release.Name }}-mapping/mapping.yaml
+  resourceGroup: {{ .Values.restdefinitions.mapping.resourceGroup }}
+  resource:
+    # Federation mapping: client-chosen id (PUT), natural-key spec field `id`.
+    kind: {{ .Values.restdefinitions.mapping.resourceKind }}
+    identifiers:
+      - id
+    additionalStatusFields:
+      - mapping.id
+    verbsDescription:
+      - action: create
+        method: PUT
+        path: /OS-FEDERATION/mappings/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: spec.id
+      - action: get
+        method: GET
+        path: /OS-FEDERATION/mappings/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: spec.id
+      - action: update
+        method: PUT
+        path: /OS-FEDERATION/mappings/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: spec.id
+      - action: delete
+        method: DELETE
+        path: /OS-FEDERATION/mappings/{id}
+        requestFieldMapping:
+          - inPath: id
+            inCustomResource: spec.id
+{{- end }}

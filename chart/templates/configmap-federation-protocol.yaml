@@ -1,0 +1,11 @@
+{{- if .Values.restdefinitions.federation_protocol.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-federation-protocol
+  labels:
+    {{- include "openstack-keystone-operator-kog.labels" . | nindent 4 }}
+data:
+  federation-protocol.yaml: |
+{{ tpl (.Files.Get "assets/federation-protocol.yaml") . | indent 4 }}
+{{- end }}
